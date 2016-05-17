@@ -5,7 +5,7 @@ module Main exposing (main)
 -- produce a representation of the resulting painting.
 
 import Color as Color exposing (Color)
-import Element exposing (Element, Position)
+import Element exposing (Element, Pos, Position)
 import Html exposing (Html)
 import Html.App as App
 import List.Extra as List
@@ -28,14 +28,18 @@ type alias Painting =
     -- The width of the frame can be different from the intermediate borders.
     , frameWidth : Inches
     , nucleus : Square -- The innermost square
-    -- A real number between 1 and -1. Controls the vertical padding between intermediate squares.
-    -- A perspective of -1 will cause all intermediate squares to share the same base.
-    -- A perspective of 1 will cause all intermediate squares to share the same top.
-    -- A perspective of 0 will cause all intermediate squares to be perfectly concentric.
-    , verticalPerspective : Float
+    , verticalAlignment : VerticalAlignment -- Alignment for the interior squares.
+    --  A skew of 0 will cause all interior squares to share their top edge.
+    --  A skew of 1 will cause the top interior border to equal the
+    --  horizontal interior border.
+    , verticalSkew : Float
     -- The colors of the intermediate squares, listed from the outside in.
     , intermediates : List Color 
     }
+
+type VerticalAlignment
+    = Top -- The interior squares are aligned with the top of the painting.
+    | Bottom -- The interior squares are aligned with the bottom of the painting.
 
 -- A constituent square within an "Homage to the Square"-style painting.
 type alias Square =
@@ -45,18 +49,26 @@ type alias Square =
 
 view : Painting -> Html {}
 view painting = 
-    let p : Inches
-        p = intermediatePadding painting
+    let borderWidth : Inches
+        borderWidth = intermediateWidth painting
+
+        borderHeight : Inches
+        borderHeight = intermediateHeight painting
+
+        position : Pos -> Pos -> Position
+        position = case painting.verticalAlignment of
+            Top -> Element.midTopAt
+            Bottom -> Element.midBottomAt
 
         framePosition : Inches -> Position
-        framePosition _ = Element.midBottomAt (Element.absolute <| inchesToPixels (painting.frame.dimensions.width / 2))
+        framePosition _ = position (Element.absolute <| inchesToPixels (painting.frame.dimensions.width / 2))
             <| Element.absolute
             <| inchesToPixels painting.frameWidth
 
         intermediatePosition : Inches -> Position
-        intermediatePosition width = Element.midBottomAt (Element.absolute <| inchesToPixels width) 
+        intermediatePosition width = position (Element.absolute <| inchesToPixels width) 
             <| Element.absolute
-            <| inchesToPixels p
+            <| inchesToPixels borderHeight
     in Element.toHtml
         <| nestSquare framePosition painting.frame
         <| List.foldr (nestSquare intermediatePosition) (viewSquare painting.nucleus)
@@ -79,7 +91,7 @@ intermediateSquares painting =
     let { frame, frameWidth, nucleus, intermediates } = painting
         
         padding : Inches
-        padding = intermediatePadding painting
+        padding = intermediateWidth painting
         
         interpolate : Color -> Square -> Square
         interpolate color childSquare =
@@ -92,12 +104,15 @@ intermediateSquares painting =
     in List.scanr interpolate nucleus intermediates
 
 -- The space between intermediate squares.
-intermediatePadding : Painting -> Inches
-intermediatePadding { frame, nucleus, frameWidth, intermediates } = 
+intermediateWidth : Painting -> Inches
+intermediateWidth { frame, nucleus, frameWidth, intermediates } = 
     let totalIntermediate = frame.dimensions.width
         - 2 * frameWidth
         - nucleus.dimensions.width 
     in totalIntermediate / (toFloat <| 2 * (List.length intermediates))
+
+intermediateHeight : Painting -> Inches
+intermediateHeight painting = painting.verticalSkew * intermediateWidth painting
 
 model : Painting
 model =
@@ -116,7 +131,8 @@ model =
             }
         , color = Color.yellow
         }
-    , verticalPerspective = -0.5
+    , verticalSkew = 0.5
+    , verticalAlignment = Bottom
     , intermediates = [Color.red, Color.orange]
     }
 
