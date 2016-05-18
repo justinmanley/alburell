@@ -5,10 +5,12 @@ module Main exposing (main)
 -- produce a representation of the resulting painting.
 
 import Color as Color exposing (Color)
-import Element exposing (Element, Pos, Position)
+import Element exposing (Element, Pos, Position, above)
+import Text
 import Html exposing (Html)
 import Html.App as App
 import List.Extra as List
+import Maybe.Extra as Maybe
 
 type alias Inches = Float
 
@@ -47,6 +49,29 @@ type alias Square =
     , color : Color
     }
 
+-- Show the calculated dimensions (in inches) for a square.
+viewDimensions : Square -> Element
+viewDimensions { dimensions, color } =
+    let contrastColor : Color
+        contrastColor =
+            if (Color.toHsl color |> .lightness) < 0.5
+            then Color.white
+            else Color.black
+
+        viewDimension : String -> Float -> Element
+        viewDimension name x = Element.leftAligned
+            <| Text.color contrastColor
+            <| Text.fromString
+            <| name ++ ": " ++ toString x ++ " in."
+
+        pad : Int -> Element -> Element
+        pad p el =
+            let w = Element.widthOf el + p
+                h = Element.heightOf el + p
+            in Element.container w h Element.middle el
+    in pad 25 <|
+        viewDimension "width" dimensions.width `above` viewDimension "height" dimensions.height
+
 view : Painting -> Html {}
 view painting = 
     let borderWidth : Inches
@@ -78,13 +103,20 @@ nestSquare : (Inches -> Position) -> Square -> Element -> Element
 nestSquare position square child =
     let w = inchesToPixels square.dimensions.width
         h = inchesToPixels square.dimensions.height
-    in Element.container w h (position <| square.dimensions.width / 2) child |> Element.color square.color
+    in Element.layers
+        [ Element.container w h (position <| square.dimensions.width / 2) child
+            |> Element.color square.color
+        , viewDimensions square
+        ]
 
 viewSquare : Square -> Element
 viewSquare square = 
     let w = inchesToPixels square.dimensions.width
         h = inchesToPixels square.dimensions.height
-    in Element.spacer w h |> Element.color square.color
+    in Element.layers
+        [ Element.spacer w h |> Element.color square.color
+        , viewDimensions square
+        ]
 
 intermediateSquares : Painting -> List Square
 intermediateSquares painting = 
@@ -101,7 +133,15 @@ intermediateSquares painting =
                 }
             , color = color
             } 
-    in List.scanr interpolate nucleus intermediates
+
+        squares : List Square
+        squares = List.scanr interpolate nucleus intermediates
+
+    -- Return the list of intermediate squares, minus the nucleus.
+    -- This removal lets us use the nucleus as a seed for a foldr later.
+    in case List.init squares of
+        Nothing -> []
+        Just ss -> ss
 
 -- The space between intermediate squares.
 intermediateWidth : Painting -> Inches
