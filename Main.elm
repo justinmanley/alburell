@@ -14,6 +14,8 @@ import Maybe.Extra as Maybe
 
 type alias Inches = Float
 
+-- Scale inches by 100 (arbitrarily) so that they are visible
+-- on-screen.
 inchesToPixels : Inches -> Int
 inchesToPixels = round << ((*) 100)
 
@@ -49,6 +51,13 @@ type alias Square =
     , color : Color
     }
 
+-- Show a floating-point number as inches.
+viewDimension : Color -> String -> Inches -> Element
+viewDimension color name x = Element.leftAligned
+    <| Text.color color
+    <| Text.fromString
+    <| name ++ ": " ++ toString x ++ " in."
+
 -- Show the calculated dimensions (in inches) for a square.
 viewDimensions : Square -> Element
 viewDimensions { dimensions, color } =
@@ -58,19 +67,15 @@ viewDimensions { dimensions, color } =
             then Color.white
             else Color.black
 
-        viewDimension : String -> Float -> Element
-        viewDimension name x = Element.leftAligned
-            <| Text.color contrastColor
-            <| Text.fromString
-            <| name ++ ": " ++ toString x ++ " in."
-
         pad : Int -> Element -> Element
         pad p el =
             let w = Element.widthOf el + p
                 h = Element.heightOf el + p
             in Element.container w h Element.middle el
     in pad 25 <|
-        viewDimension "width" dimensions.width `above` viewDimension "height" dimensions.height
+        viewDimension contrastColor "width" dimensions.width
+        `above`
+        viewDimension contrastColor "height" dimensions.height
 
 view : Painting -> Html {}
 view painting = 
@@ -94,10 +99,17 @@ view painting =
         intermediatePosition width = position (Element.absolute <| inchesToPixels width) 
             <| Element.absolute
             <| inchesToPixels borderHeight
+
+        renderedPainting : Element
+        renderedPainting = nestSquare framePosition painting.frame
+            <| List.foldr (nestSquare intermediatePosition) (viewSquare painting.nucleus)
+            <| intermediateSquares painting
     in Element.toHtml
-        <| nestSquare framePosition painting.frame
-        <| List.foldr (nestSquare intermediatePosition) (viewSquare painting.nucleus)
-        <| intermediateSquares painting
+        <| Element.flow Element.down
+            [ renderedPainting
+            , viewDimension Color.black "intermediateWidth" borderWidth
+            , viewDimension Color.black "intermediateHeight" borderHeight
+            ]
 
 nestSquare : (Inches -> Position) -> Square -> Element -> Element
 nestSquare position square child =
