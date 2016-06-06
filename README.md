@@ -22,4 +22,4 @@ elm reactor # starts a web server so that the study can be viewed in the browser
 Various color studies are located under [studies/](./studies). Each study is an Arduino sketch which can be
 run in the frame. It's easiest to do this with the [Arduino IDE](https://www.arduino.cc/en/Main/Software).
 
-By @justinmanley and @jbolling.
+By [@justinmanley](https://github.com/justinmanley) and [@jbolling](https://github.com/jbolling).
