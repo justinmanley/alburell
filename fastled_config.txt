@@ -1,0 +1,7 @@
+// Configuration for FastLED.
+
+// Adding this fixes the error message that __cxa_guard_acquire and
+// __cxa_guard_release are undefined. See FastLED/FastLED#46 and
+// https://plus.google.com/115631597349900556834/posts/2d7hBtXnXFQ.
+#define NEED_CXX_BITS
+

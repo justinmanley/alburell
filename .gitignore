@@ -1,1 +1,6 @@
+# Elm
 sizing/elm-stuff
+
+# Arduino
+libraries/FastLED
+arduino-cmake

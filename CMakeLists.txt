@@ -1,23 +1,25 @@
 cmake_minimum_required(VERSION 3.2)
 
+# See queezythegreat/arduino-cmake#146.
+# Set so that CMake recognizes the uno board, per blemasle/arduino-cmake.
+set(ARDUINO_1_5 TRUE)
+set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/arduino-cmake/cmake/ArduinoToolchain.cmake)
+
 set(PROJECT_NAME Alburrell)
 project(${PROJECT_NAME})
 
-# This adds another subdirectory, which has 'project(gtest)'.
-add_subdirectory(lib/gtest-1.7.0)
+# ==============
+# Arduino sketch
+# ==============
+
+add_subdirectory(src)
+add_subdirectory(test)
+
+generate_arduino_firmware(Sketch
+    BOARD uno 
+    SKETCH ${CMAKE_SOURCE_DIR}/studies/simple
+    LIBS Util)
 
 enable_testing()
 
-# Include the gtest library. gtest_SOURCE_DIR is available due to
-# 'project(gtest)' above.
-include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-
-add_executable(Test util_test.cpp)
-
-add_library(Util util.cpp util.h)
-
-# target_compile_features(Test PRIVATE cxx_range_for)
-set_property(TARGET Test PROPERTY CXX_STANDARD 11)
-target_link_libraries(Test Util gtest gtest_main)
-
-add_test(Name UtilTest COMMAND Test)
+add_test(NAME UtilTest COMMAND Test)

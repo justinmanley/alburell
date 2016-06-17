@@ -3,10 +3,10 @@
 
 #include "util.h"
 
+#define NEED_CXX_BITS
+
 #define DATA_PIN 10
 #define NUM_LEDS 74
-
-#define PI 3.14159265
 
 // The "base colors" for each layer.
 #define BACK CRGB(0, 0, 25)
@@ -14,6 +14,8 @@
 #define FRONT CRGB(0, 0, 75)
 
 CRGB leds[NUM_LEDS];
+
+using namespace __cxxabiv1;
 
 // Counter which increases with each iteration of the loop and animates the colors of each layer.
 int t = 0;
