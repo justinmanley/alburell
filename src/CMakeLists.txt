@@ -1,1 +1,4 @@
-add_library(Util util.h util.cpp)
+generate_arduino_library(Util
+    SRCS util.cpp
+    HDRS util.h
+    BOARD uno) 

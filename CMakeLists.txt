@@ -13,13 +13,10 @@ project(${PROJECT_NAME})
 # ==============
 
 add_subdirectory(src)
-add_subdirectory(test)
 
 generate_arduino_firmware(Sketch
     BOARD uno 
     SKETCH ${CMAKE_SOURCE_DIR}/studies/simple
+    PORT /dev/ttyACM0
     LIBS Util)
 
-enable_testing()
-
-add_test(NAME UtilTest COMMAND Test)

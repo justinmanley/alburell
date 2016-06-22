@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "util.h"
+#include "../src/util.h"
 
 TEST(TriangleWave, Period) {
   // Check a few zeroes
