@@ -1,53 +1,80 @@
 #include "FastLED.h"
 #include "math.h"
-
-#include "util.h"
+#include <stdio.h>
 
 #define NEED_CXX_BITS
 
 #define DATA_PIN 10
 #define NUM_LEDS 74
 
-// The "base colors" for each layer.
-#define BACK CRGB(0, 0, 25)
-#define MIDDLE CRGB(0, 0, 50)
-#define FRONT CRGB(0, 0, 75)
+class RGBFract {
+  public:
+    accum88 red, green, blue;
+
+    RGBFract() {};
+    RGBFract(accum88 _red, accum88 _green, accum88 _blue) {
+        red = _red;
+        green = _green;
+        blue = _blue;
+    }
+
+    CRGB dither(unsigned long t) {
+        return CRGB(
+            ditherChannel(t, red),
+            ditherChannel(t, green),
+            ditherChannel(t, blue)
+        );
+    }
+
+    unsigned short ditherChannel(unsigned long t, accum88 channel) {
+        // The lower 8 bits of the accum88 are the fractional part.
+        unsigned short fract = channel & 0xff;
+       
+        // No dithering necessary!
+        if (fract <= 1) {
+            return channel >> 8;
+        } 
+        
+        if (t % round(256 / fract) == 0) {
+            return (channel >> 8) + 1;
+        }
+
+        return channel >> 8;
+    }
+};
+
+unsigned long counter = 0;
+
+RGBFract back;
 
 CRGB leds[NUM_LEDS];
-
-using namespace __cxxabiv1;
-
-// Counter which increases with each iteration of the loop and animates the colors of each layer.
-int t = 0;
 
 void setup() {
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
 
-  // Middle layer
-  for (int i = 16; i < 40; i++) {
-    leds[i] = CRGB(0, 0, MIDDLE.blue );
-  }
+  // Don't want FastLED's built-in dithering to interfere with our manual
+  // dithering.
+  FastLED.setDither(0);
+
+  Serial.begin(9600);
 }
 
-void loop() {
+void loop() {  
+  // Update the colors
+  int amplitude = scale16(sin16(counter), 50 << 8);
+  back = RGBFract(0, 0, (40 << 8) + amplitude);
+
   // LED index.
   int i = 0;
 
-  // Bottom layer
+  // Back layer
+  CRGB backLED = back.dither(counter);
   for (i = 0; i < 16; i++) {
-    // leds[i] = CRGB(0, 0, round(BACK.blue * sin(t)));
-    leds[i] = CRGB(0, 0, BACK.blue + scaled_triangle_wave(t, BACK.blue));
+    leds[i] = backLED;
   }
 
-  // Middle layer stays the same
-
-  // Frontmost layer
-  for (i = 40; i < 74; i++) {
-    // leds[i] = CRGB(0, 0, round(FRONT.blue * sin(t)));
-    leds[i] = CRGB(0, 0, FRONT.blue + scaled_triangle_wave(BACK.blue + t, BACK.blue));
-  }
-
-  t += 1;
+  counter += 1;
   FastLED.show();
-  delay(200);
 }
+
+

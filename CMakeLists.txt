@@ -12,11 +12,8 @@ project(${PROJECT_NAME})
 # Arduino sketch
 # ==============
 
-add_subdirectory(src)
-
 generate_arduino_firmware(Sketch
     BOARD uno 
     SKETCH ${CMAKE_SOURCE_DIR}/studies/simple
-    PORT /dev/ttyACM0
-    LIBS Util)
+    PORT /dev/ttyACM0)
 
