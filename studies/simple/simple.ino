@@ -5,7 +5,7 @@
 #define NEED_CXX_BITS
 
 #define DATA_PIN 10
-#define NUM_LEDS 74
+#define NUM_LEDS 73
 
 /**
  * An RGB 88 is an RGB with 16 bits per channel; the 8 bits of CRGB color are augmented by 8
@@ -108,8 +108,8 @@ CRGB leds[NUM_LEDS];
 void setup() {
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
 
-  back = RGB88Animator(CRGB::Aquamarine, CRGB::Coral);
-  middle = RGB88Animator(CRGB::Red, CRGB::Indigo);
+  back = RGB88Animator(CRGB::Aquamarine, CRGB::Yellow);
+  middle = RGB88Animator(CRGB::Red, CRGB::MediumSeaGreen);
   front = RGB88Animator(CRGB::Olive, CRGB::Purple);
 
   // Don't want FastLED's built-in dithering to interfere with our manual
@@ -129,13 +129,13 @@ void loop() {
 
   // Middle layer
   CRGB middleLED = middle.at(counter << 4).dither(counter);
-  for (i = 16; i < 40; i++) {
+  for (i = 16; i < 39; i++) {
     leds[i] = middleLED;  
   }
 
   // Front layer
   CRGB frontLED = front.at(counter << 4).dither(counter);
-  for (i = 40; i < 74; i++) {
+  for (i = 39; i < 73; i++) {
     leds[i] = frontLED;  
   }
 
